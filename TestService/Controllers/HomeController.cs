@@ -11,8 +11,7 @@ namespace TestService.Controllers
 {
     public class HomeController : Controller
     {
-		public static QueryHandler handler = new QueryHandler();
-
+	
         public ActionResult Index()
         {
             var mvcName = typeof(Controller).Assembly.GetName();
@@ -23,13 +22,13 @@ namespace TestService.Controllers
 
             return View();
         }
+		
+       public QueryHandler handler = new QueryHandler();
 
-        public ActionResult ReturnJson(string query)
+		public JsonResult Json()
         {
-            string commtext = JsonConvert.DeserializeObject(query).ToString();
-            handler.ConnectionOpen();
-            List<string> spinnerNames = handler.spinnerFill(commtext);
-            return Json(spinnerNames);
+            List<string> spinnerNames = handler.spinnerFill();
+            return Json(spinnerNames,JsonRequestBehavior.AllowGet);
 		}
     }
 }

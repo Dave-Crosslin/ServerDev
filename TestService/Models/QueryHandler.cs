@@ -10,22 +10,12 @@ namespace TestService.Models
         {
         }
 
-		private static MySqlConnection connection = new MySqlConnection();
-
+        public string connectionString = "Server=localhost;Database=TestDB;User ID=root;Password=DC;Pooling=false";
 		public string name;
 
 
-		public void ConnectionOpen()
-		{
-			connection.ConnectionString = "Server=localhost;Database=TestDB;User ID=root;Password=DC;Pooling=false";
-			connection.Open();
-		}
-
-		public void ConnectionClose()
-		{
-			connection.Close();
-		}
-
+		
+		
 		public string QueryCreate(string name)
 		{
 			string commtext = String.Format("SELECT Score, DT FROM Teams WHERE ID = '{0}' GROUP BY DT, Production;", name);
@@ -35,49 +25,60 @@ namespace TestService.Models
 		public Dictionary<Int64, int> QueryExecute(string commtext)
 		{
 			Dictionary<Int64, int> Dict = new Dictionary<Int64, int>();
+            using (MySqlConnection conn = new MySqlConnection(connectionString))
+            using (MySqlCommand cmd = new MySqlCommand(commtext)){    
+                conn.Open();
+                using (MySqlDataReader Reader = cmd.ExecuteReader())
+                {
 
-			MySqlCommand command = connection.CreateCommand();
-			command.CommandText = commtext;
-			using (MySqlDataReader Reader = command.ExecuteReader())
-			{
 
+                    while (Reader.Read())
+                    {
 
-				while (Reader.Read())
-				{
+                        int myInt = Convert.ToInt32(Reader.GetValue(0).ToString());
 
-					int myInt = Convert.ToInt32(Reader.GetValue(0).ToString());
+                        Int64 myDT = Int64.Parse(Convert.ToDateTime(Reader.GetValue(1).ToString()).ToString("MMDD"));
 
-					Int64 myDT = Int64.Parse(Convert.ToDateTime(Reader.GetValue(1).ToString()).ToString("MMDD"));
+                        Dict.Add(myDT, myInt);
 
-					Dict.Add(myDT, myInt);
-
-				}
-
-				return Dict;
-			}
+                    }
+                }
+             }
+			return Dict;
 		}
 
+            
+        public List<string> spinnerFill()
+        {
+          
 
-		public List<string> spinnerFill(string commtext)
-		{
+            List<string> row = new List<string>();
+            using (MySqlConnection conn = new MySqlConnection(connectionString))
+            using (MySqlCommand cmd = new MySqlCommand("SELECT ID FROM Teams;",conn)){
 
-			List<string> row = new List<string>();
+                conn.Open();
+                using (MySqlDataReader Reader = cmd.ExecuteReader())
+                {
 
-			MySqlCommand command = connection.CreateCommand();
-			command.CommandText = commtext;
-			using (MySqlDataReader Reader = command.ExecuteReader())
-			{
+                    while (Reader.Read())
+                    {
 
-				while (Reader.Read())
-				{
+                        for (int i = 0; i < Reader.FieldCount; i++)
+                        {
+                            if (row.Contains(Reader.GetValue(i).ToString()))
+                            {
+                                continue;
+                            }
+                            else
+                            {
+                                row.Add(Reader.GetValue(i).ToString());
+                            }
+                        }
+                    }
+                }
+            }
 
-					for (int i = 0; i < Reader.FieldCount; i++)
-					{
-						row.Add(Reader.GetValue(i).ToString());
-					}
-				}
-			}
-			return row;
-		}
+         return row;
+        }
 	}
 }
